@@ -9,7 +9,6 @@
 from strings import title, commandString
 from currency import *
 from funds import GetFundEntries, Entries, FundEntry, FundForm, SaveFundEntries
-from utilities import FTError
 from params import ParamHandler
 
 import time
