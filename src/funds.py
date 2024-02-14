@@ -68,11 +68,19 @@ class FundEntry:
 	def SubtractAmount(self, amount: float, currency: str = "CAD") -> float:
 		USDAmount = ConvertToDollar(amount, currency)
 
+		if round(USDAmount, 2) > self.__amount:
+			FTError("The amount provided is higher than amount in this entry.")
+			return self.__amount
+
 		self.__amount -= USDAmount
 		return self.__amount
 
 	def AddAmount(self, amount: float, currency: str = "CAD") -> float:
-		USDAmount = ConvertToDollar(amount, currency)
+		if amount < 0:
+			FTError("Cannot add an amount to this entry that is less than zero. Use SubtractAmount() instead.")
+			return self.__amount
+
+		USDAmount = round(ConvertToDollar(amount, currency), 2)
 
 		self.__amount += USDAmount
 		return self.__amount
@@ -110,13 +118,21 @@ class Entries:
 				## Find someone to lower their debt balance.
 				for entry in self.__entries:
 					if entry.GetDebtor() is not None:
-						self._SubtractFunds(entry, USDAmount)
+						if round(entry.GetAmount(), 2) == round(USDAmount, 2):
+							self.__entries.remove(entry)
+							return
+
+						entry.SubtractAmount(amount)
 						return
 
 			## Search through and find the debtor in question -- helper function maybe?
 			for entry in self.__entries:
 				if entry.GetDebtor() == debtor:
-					self._SubtractFunds(entry, USDAmount)
+					if round(entry.GetAmount(), 2) == round(USDAmount, 2):
+						self.__entries.remove(entry)
+						return
+
+					entry.SubtractAmount(amount)
 					return
 
 			FTError(f"Cannot find debtor with name: {debtor}. Perhaps this is a typo?")
@@ -125,20 +141,11 @@ class Entries:
 		## Find the first entry that has an amount greater than or equal to the amount provided
 		for entry in self.__entries:
 			if form is None or form == entry.GetForm():
-				self._SubtractFunds(entry, USDAmount)
+				if round(entry.GetAmount(), 2) == round(USDAmount, 2):
+					self.__entries.remove(entry)
+					return
 
-	#@ Helper @#
-	def _SubtractFunds(self, entry: FundEntry, amount: float) -> None:
-		if entry.GetAmount() < amount:
-			return
-
-		if entry.GetAmount() > amount:
-			entry.SubtractAmount(amount)
-			return
-
-		if entry.GetAmount() == amount:
-			self.__entries.remove(entry)
-			return
+				entry.SubtractAmount(amount)
 
 
 def SaveFundEntries(entries: Entries) -> None:
