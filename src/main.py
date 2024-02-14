@@ -13,6 +13,7 @@ from params import ParamHandler
 
 import time
 from typing import Dict, List, Optional, Any
+from benedict import benedict
 
 HOUR_NS = 3600000000000
 
@@ -72,7 +73,7 @@ def MainLoop():
 	print("Starting up...\n")
 
 	startupInfo = Startup()
-	entries = startupInfo["entries"]["entryList"]
+	entries: Entries = startupInfo["entries"]["entryList"]
 	rates = startupInfo["currency"]["currencyInfo"]
 
 	argumentIndexes = {
@@ -88,7 +89,7 @@ def MainLoop():
 	}
 
 	for line in title.split("\n"):
-		time.sleep(0.3)
+		# time.sleep(0.3)
 		print(line)
 
 	print("Welcome to the financial tracker!\n")
@@ -102,6 +103,8 @@ def MainLoop():
 
 		if params.command == "help":
 			print(commandString)
+
+		###########################################################################################
 
 		elif params.command in ("exit", "stop"):
 			print("Would you like to save the changes made? (y/n)")
@@ -125,12 +128,15 @@ def MainLoop():
 			print("Exiting program...")
 			break
 
+		###########################################################################################
+
 		elif params.command == "addfunds":
-			arguments = GenerateArgumentDict(params, 2, argumentIndexes)
+			arguments = GenerateArgumentDict(params, 1, argumentIndexes)
 
 			if arguments.get("amount") is None:
 				continue
 
+			arguments.setdefault("form", "debit")
 			arguments.setdefault("currency", "cad")
 			arguments.setdefault("debtor", None)
 
@@ -145,13 +151,16 @@ def MainLoop():
 
 			entries.AddFunds(FundEntry(float(arguments["amount"]), arguments["currency"], arguments["form"], arguments["debtor"]))
 
-		elif params.command == "removefunds":
-			arguments = GenerateArgumentDict(params, 2, argumentIndexes)
+		###########################################################################################
 
-			if arguments.get("amount") is None:
+		elif params.command == "removefunds":
+			arguments = GenerateArgumentDict(params, 1, argumentIndexes)
+
+			if arguments is None or arguments.get("amount") is None:
 				print("You must provide an amount to add to the financial entries!")
 				continue
 
+			arguments.setdefault("form", "debit")
 			arguments.setdefault("currency", "cad")
 			arguments.setdefault("debtor", None)
 
@@ -164,7 +173,9 @@ def MainLoop():
 				print(f"{arguments['form']} is not a valid currency form.")
 				continue
 
-			entries.RemoveFunds(FundEntry(float(arguments["amount"]), arguments["currency"], arguments["form"], arguments["debtor"]))
+			entries.RemoveFunds(float(arguments["amount"]), arguments["currency"], arguments["form"], arguments["debtor"])
+
+		###########################################################################################
 
 		elif params.command == "getexchange":
 			arguments = GenerateArgumentDict(params, 2, argumentIndexes)
@@ -178,6 +189,43 @@ def MainLoop():
 
 			exchange = ConvertToDollar(float(arguments["amount"]), arguments["currency"])
 			print(f"{arguments['amount']} {arguments['currency'].upper()} --> {round(exchange, 4)} USD")
+
+		###########################################################################################
+
+		elif params.command == "showfunds":
+			fundsByCurrency = benedict()
+			allFunds = entries.GetAllEntries()
+
+			for entry in allFunds:
+				currency = entry.GetCurrency()
+				form = entry.GetForm()
+
+				if not f'{currency}.{form.name}' in fundsByCurrency:
+					fundsByCurrency[currency, form.name] = []
+
+				fundsByCurrency[currency, form.name].append(entry)
+
+			for currency in fundsByCurrency:
+				print(f"{currency}: ")
+				currTotal = 0
+
+				for form in fundsByCurrency[currency]:
+					print(" " * 2, f"{form}: ")
+					subtotal = 0
+
+					i = 1
+					for entry in fundsByCurrency[currency][form]:
+						print(" " * 4, f"{i}: {round(ConvertFromDollar(entry.GetAmount(), currency), 2)} {currency}")
+						subtotal += entry.GetAmount()
+
+						i += 1
+
+					print("\n", " " * 4, f"Subtotal: {round(ConvertFromDollar(subtotal, currency), 2)} {currency}")
+					currTotal += subtotal
+
+				print("\n", " " * 2, f"Currency Total: {round(currTotal, 2)} USD")
+
+		###########################################################################################
 
 		else:
 			print("'" + userInput + "' is an unrecognized command :/")
