@@ -21,32 +21,36 @@ title = """
 """
 
 commandString = """
-1. >>> AddFunds     [amount : decimal] ?[form : string] ?[currency : string]
+01. >>> AddFunds     [amount : decimal] ?[form : string] ?[currency : string] ?[debtor : string]
 	   - Adds funds to the overall account. The forms that currency can take are: Bank Debit, Physical Reserve.
 	   - You may specify a currency to add currency in. The default currency is CAD.
 
-2. >>> RemoveFunds  [amount : decimal] ?[form : string] ?[currency : string]
+02. >>> RemoveFunds  [amount : decimal] ?[form : string] ?[currency : string] ?[debtor : string]
 	   - Removes funds from the overall account. The forms that currency can take are: Bank Debit, Physical Reserve.
 	   - You may specify a currency to add currency in. The default currency is CAD.
 
-3. >>> GetExchange  [currency : string] [amount : decimal]
+03. >>> SetFunds     [amount : decimal] ?[form : string] ?[currency : string] ?[debtor : string]
+	   - Sets the funds of a certain form and currency to the given amount.
+	   - You may specify a currency to add currency in. The default currency is CAD.
+
+04. >>> GetExchange  [currency : string] [amount : decimal]
 	   - Downloads the latest exchange rates between the U.S. dollar and a provided currency.
 	   - If no currency is provided, then the program will download ALL available exchange rates.
 
-4. >>> AddCredit    [amount : decimal] ?[currency : string]
+05. >>> AddCredit    [amount : decimal] ?[currency : string]
 	   - Adds credit debt to the overall account.
 
-5. >>> RemoveCredit [amount : decimal] ?[currency : string]
+06. >>> RemoveCredit [amount : decimal] ?[currency : string]
 	   - Removes credit debt from the overall account.
 
-6. >>> ShowFunds
+07. >>> ShowFunds
 	   - Shows a complete breakdown of all active funds, physical reserves, as well credit debts by currency.
 
-7. >>> QueryFunds   (WIP!)
+08. >>> QueryFunds   (WIP!)
 
-8. >>> Help
+09. >>> Help
 	   - Shows this info sheet.
 
-9. >>> Exit/Stop
+10. >>> Exit/Stop
 	   - Stops the program.
 """

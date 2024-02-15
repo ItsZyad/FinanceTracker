@@ -65,6 +65,11 @@ class FundEntry:
 	def GetDebtor(self) -> Optional[str]:
 		return self.__debtor
 
+	def SetAmount(self, amount: float, currency: str = "CAD") -> None:
+		USDAmount = ConvertToDollar(amount, currency)
+
+		self.__amount = USDAmount
+
 	def SubtractAmount(self, amount: float, currency: str = "CAD") -> float:
 		USDAmount = ConvertToDollar(amount, currency)
 
@@ -146,6 +151,16 @@ class Entries:
 					return
 
 				entry.SubtractAmount(amount)
+
+	def SetFunds(self, amount: float, currency: str = "CAD", form: Optional[FundForm] = None, debtor: Optional[str] = None) -> None:
+		for entry in self.__entries:
+			entryCurrency = entry.GetCurrency()
+			entryForm = entry.GetForm()
+			entryDebtor = entry.GetDebtor()
+
+			if entryForm == form and entryCurrency == currency.upper() and entryDebtor == debtor:
+				entry.SetAmount(amount, currency)
+				return
 
 
 def SaveFundEntries(entries: Entries) -> None:

@@ -79,6 +79,7 @@ def MainLoop():
 	argumentIndexes = {
 		"addfunds" : ["amount", "form", "currency", "debtor"],
 		"removefunds": ["amount", "form", "currency", "debtor"],
+		"setfunds" : ["amount", "form", "currency", "debtor"],
 		"getexchange": ["currency", "amount"]
 	}
 
@@ -174,6 +175,30 @@ def MainLoop():
 				continue
 
 			entries.RemoveFunds(float(arguments["amount"]), arguments["currency"], arguments["form"], arguments["debtor"])
+
+		###########################################################################################
+
+		elif params.command == "setfunds":
+			arguments = GenerateArgumentDict(params, 1, argumentIndexes)
+
+			if arguments is None or arguments.get("amount") is None:
+				print("You must provide an amount to set the financial entries to!")
+				continue
+
+			arguments.setdefault("form", "debit")
+			arguments.setdefault("currency", "cad")
+			arguments.setdefault("debtor", None)
+
+			for validTypes in validForms:
+				if arguments["form"].lower() in validForms[validTypes]:
+					arguments["form"] = validTypes
+					break
+
+			if not isinstance(arguments["form"], FundForm):
+				print(f"{arguments['form']} is not a valid currency form.")
+				continue
+
+			entries.SetFunds(float(arguments["amount"]), arguments["currency"], arguments["form"], arguments["debtor"])
 
 		###########################################################################################
 
