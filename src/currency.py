@@ -9,7 +9,7 @@
 
 from utilities import FTError
 
-from typing import Dict, List
+from typing import List
 from bs4 import BeautifulSoup
 from json import loads
 import pickle
