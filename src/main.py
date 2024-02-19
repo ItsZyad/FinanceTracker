@@ -8,7 +8,7 @@
 
 from strings import title, commandString
 from currency import *
-from funds import GetFundEntries, Entries, FundEntry, FundForm, SaveFundEntries
+from funds import GetFundEntries, FundEntries, FundEntry, FundForm, SaveFundEntries
 from params import ParamHandler
 
 import time
@@ -27,7 +27,7 @@ def Startup() -> Dict:
 			"lastUpdated" : lastUpdatedRates
 		},
 		"entries" : {
-			"entryList" : Entries(),
+			"entryList" : FundEntries(),
 			"lastUpdated" : timeNow
 		}
 	}
@@ -73,8 +73,7 @@ def MainLoop():
 	print("Starting up...\n")
 
 	startupInfo = Startup()
-	entries: Entries = startupInfo["entries"]["entryList"]
-	rates = startupInfo["currency"]["currencyInfo"]
+	entries: FundEntries = startupInfo["entries"]["entryList"]
 
 	argumentIndexes = {
 		"addfunds" : ["amount", "form", "currency", "debtor"],
