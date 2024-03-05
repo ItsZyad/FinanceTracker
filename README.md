@@ -1,0 +1,3 @@
+# Personal Finance Tracker
+
+This is a CLI program which allows you to keep track of your personal finances, with support for multiple currencies (which it exchanges on the fly), and multiple currency forms like cash, bank debit, or debt. In the future, the project should include options to query your balances, and split your money into multiple separate internal accounts, which can be queried independently of each other.
