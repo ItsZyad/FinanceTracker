@@ -137,7 +137,7 @@ def MainLoop():
 				continue
 
 			arguments.setdefault("form", "debit")
-			arguments.setdefault("currency", "cad")
+			arguments.setdefault("currency", "CAD")
 			arguments.setdefault("debtor", None)
 
 			for validTypes in validForms:
@@ -161,7 +161,7 @@ def MainLoop():
 				continue
 
 			arguments.setdefault("form", "debit")
-			arguments.setdefault("currency", "cad")
+			arguments.setdefault("currency", "CAD")
 			arguments.setdefault("debtor", None)
 
 			for validTypes in validForms:
@@ -185,7 +185,7 @@ def MainLoop():
 				continue
 
 			arguments.setdefault("form", "debit")
-			arguments.setdefault("currency", "cad")
+			arguments.setdefault("currency", "CAD")
 			arguments.setdefault("debtor", None)
 
 			for validTypes in validForms:
@@ -229,6 +229,8 @@ def MainLoop():
 
 				fundsByCurrency[currency, form.name].append(entry)
 
+			grandTotal = 0
+
 			for currency in fundsByCurrency:
 				print(f"{currency}: ")
 				currTotal = 0
@@ -239,15 +241,18 @@ def MainLoop():
 
 					i = 1
 					for entry in fundsByCurrency[currency][form]:
-						print(" " * 4, f"{i}: {round(ConvertFromDollar(entry.GetAmount(), currency), 2)} {currency}")
+						print(" " * 4, f"{i}: {round(entry.GetAmount(), 2)} {currency}")
 						subtotal += entry.GetAmount()
 
 						i += 1
 
-					print("\n", " " * 4, f"Subtotal: {round(ConvertFromDollar(subtotal, currency), 2)} {currency}")
+					print("\n", " " * 4, f"Subtotal: {round(subtotal, 2)} {currency}")
 					currTotal += subtotal
 
-				print("\n", " " * 2, f"Currency Total: {round(currTotal, 2)} USD")
+				print("\n", " " * 2, f"Currency Total: {round(currTotal, 2)} {currency}")
+				grandTotal += ConvertToDollar(currTotal, currency)
+
+			print("\n", f"Grand Totoal: {round(grandTotal, 2)} USD")
 
 		###########################################################################################
 

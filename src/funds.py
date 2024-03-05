@@ -17,7 +17,7 @@ from benedict import benedict
 
 class Entry:
 	def __init__(self, amount: float, currency: str = "CAD"):
-		self.__amount = ConvertToDollar(amount, currency)
+		self.__amount = amount
 
 		# Internal representation of all entries is the U.S. dollar.
 		self.__currency = currency.upper()
@@ -42,29 +42,23 @@ class Entry:
 	def GetCurrency(self):
 		return self.__currency
 
-	def SetAmount(self, amount: float, currency: str = "CAD") -> None:
-		USDAmount = ConvertToDollar(amount, currency)
+	def SetAmount(self, amount: float) -> None:
+		self.__amount = amount
 
-		self.__amount = USDAmount
-
-	def SubtractAmount(self, amount: float, currency: str = "CAD") -> float:
-		USDAmount = ConvertToDollar(amount, currency)
-
-		if round(USDAmount, 2) > self.__amount:
+	def SubtractAmount(self, amount: float) -> float:
+		if round(amount, 2) > self.__amount:
 			self.__amount = 0
 			return 0
 
-		self.__amount -= USDAmount
+		self.__amount -= amount
 		return self.__amount
 
-	def AddAmount(self, amount: float, currency: str = "CAD") -> float:
+	def AddAmount(self, amount: float) -> float:
 		if amount < 0:
 			FTError("Cannot add an amount to this entry that is less than zero. Use SubtractAmount() instead.")
 			return self.__amount
 
-		USDAmount = round(ConvertToDollar(amount, currency), 2)
-
-		self.__amount += USDAmount
+		self.__amount += amount
 		return self.__amount
 
 
@@ -109,28 +103,33 @@ class FundEntries:
 		return self.__entries
 
 	def AddFunds(self, entry: FundEntry) -> None:
+		e: FundEntry
 		for e in self.__entries:
-			if not entry.GetForm() == e.GetForm():
+			if entry.GetCurrency() != e.GetCurrency():
+				continue
+
+			if entry.GetForm() != e.GetForm():
 				continue
 
 			if entry.GetForm() == FundForm.DEBT and entry.GetDebtor() != e.GetDebtor():
 				continue
 
-			e.AddAmount(entry.GetAmount(), entry.GetCurrency())
+			e.AddAmount(entry.GetAmount())
 			return
 
 		self.__entries.append(entry)
 
 	def RemoveFunds(self, amount: float, currency: str = "CAD", form: Optional[FundForm] = None, debtor: Optional[str] = None) -> None:
-		USDAmount = ConvertToDollar(amount, currency)
-
 		if form == FundForm.DEBT:
 			if debtor is None:
 
 				## Find someone to lower their debt balance.
 				for entry in self.__entries:
+					if entry.GetCurrency() != currency.upper():
+						continue
+
 					if entry.GetDebtor() is not None:
-						if round(entry.GetAmount(), 2) == round(USDAmount, 2):
+						if round(entry.GetAmount(), 2) == round(amount, 2):
 							self.__entries.remove(entry)
 							return
 
@@ -139,8 +138,11 @@ class FundEntries:
 
 			## Search through and find the debtor in question -- helper function maybe?
 			for entry in self.__entries:
+				if entry.GetCurrency() != currency.upper():
+					continue
+
 				if entry.GetDebtor() == debtor:
-					if round(entry.GetAmount(), 2) == round(USDAmount, 2):
+					if round(entry.GetAmount(), 2) == round(amount, 2):
 						self.__entries.remove(entry)
 						return
 
@@ -152,8 +154,11 @@ class FundEntries:
 
 		## Find the first entry that has an amount greater than or equal to the amount provided
 		for entry in self.__entries:
+			if entry.GetCurrency() != currency.upper():
+				continue
+
 			if form is None or form == entry.GetForm():
-				if round(entry.GetAmount(), 2) == round(USDAmount, 2):
+				if round(entry.GetAmount(), 2) == round(amount, 2):
 					self.__entries.remove(entry)
 					return
 
@@ -162,12 +167,19 @@ class FundEntries:
 	def SetFunds(self, amount: float, currency: str = "CAD", form: Optional[FundForm] = None, debtor: Optional[str] = None) -> None:
 		for entry in self.__entries:
 			entryCurrency = entry.GetCurrency()
+
+			if entryCurrency != currency.upper():
+				continue
+
 			entryForm = entry.GetForm()
 			entryDebtor = entry.GetDebtor()
 
-			if entryForm == form and entryCurrency == currency.upper() and entryDebtor == debtor:
-				entry.SetAmount(amount, currency)
+			if entryForm == form and entryDebtor == debtor:
+				entry.SetAmount(amount)
 				return
+
+		FTError(f"Cannot find entry with the following currency, form, and/or debtor. Could this be a typo?")
+		return
 
 
 class DebtForm(Enum):
@@ -238,19 +250,19 @@ class DebtEntries:
 		# Creditor exists
 		entry: DebtEntry
 		for entry in entries[creditor]:
+			if entry.GetCurrency() != currency:
+				continue
 
 			# If a form is not specified then add the amount to the first entry with the same currency
 			if form is None:
-				if entry.GetCurrency() == currency:
-					entry.AddAmount(amount, currency)
-					return
+				entry.AddAmount(amount)
+				return
 
-			if entry.GetCurrency() == currency and entry.GetForm() == form:
-				entry.AddAmount(amount, currency)
+			if entry.GetForm() == form:
+				entry.AddAmount(amount)
 				return
 
 		entries[creditor].append(DebtEntry(amount, creditor, currency, form))
-		return
 
 	def RemoveDebt(self, amount: float, creditor: str, currency: str = "CAD", form: Optional[DebtForm] = DebtForm.CREDIT) -> None:
 		entries = benedict(self.__entries)
@@ -265,13 +277,15 @@ class DebtEntries:
 			if amount < entry.GetAmount():
 				continue
 
+			if entry.GetCurrency() != currency:
+				continue
+
 			if form is None:
-				if entry.GetCurrency() == currency:
-					entry.SubtractAmount(amount, currency)
+				entry.SubtractAmount(amount)
 
 			else:
-				if entry.GetCurrency() == currency and entry.GetForm() == form:
-					entry.SubtractAmount(amount, currency)
+				if entry.GetForm() == form:
+					entry.SubtractAmount(amount)
 
 			if entry.GetAmount() == 0:
 				self.__entries[creditor].remove(entry)
@@ -289,9 +303,13 @@ class DebtEntries:
 
 		for entry in entries[creditor]:
 			entryCurrency = entry.GetCurrency()
+
+			if entryCurrency != currency.upper():
+				continue
+
 			entryForm = entry.GetForm()
 
-			if entryForm == form and entryCurrency == currency.upper():
+			if entryForm == form:
 				entry.SetAmount(amount, currency)
 				return
 
